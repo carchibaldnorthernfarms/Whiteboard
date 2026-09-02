@@ -19,8 +19,7 @@ jobs:
           script: |
             const fs = require('fs');
             const data = context.payload.client_payload.data;
-            fs.writeFileSync('board.json', JSON.stringify(data));
-
+            fs.writeFileSync('board.json', data);
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
