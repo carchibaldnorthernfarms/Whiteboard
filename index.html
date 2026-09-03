@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cutting Room Whiteboard</title>
+<title>Inventory Remaining</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
@@ -24,6 +24,14 @@
     --subheader-text: #17365d;
     --status-live: #2f6b4f;
     --status-stale: #b45309;
+    --highlight-red: #fca5a5;
+    --highlight-red-text: #7f1d1d;
+    --highlight-orange: #fed7aa;
+    --highlight-orange-text: #7c2d12;
+    --highlight-yellow: #fef08a;
+    --highlight-yellow-text: #713f12;
+    --closed-bg: #1f2937;
+    --closed-text: #9ca3af;
     --shadow: 0 1px 2px rgba(31, 41, 55, 0.04), 0 6px 16px rgba(31, 41, 55, 0.05);
   }
 
@@ -43,6 +51,14 @@
       --subheader-text: #cfe3f7;
       --status-live: #5cb896;
       --status-stale: #eab35c;
+      --highlight-red: #7f1d1d;
+      --highlight-red-text: #fecaca;
+      --highlight-orange: #7c2d12;
+      --highlight-orange-text: #fed7aa;
+      --highlight-yellow: #713f12;
+      --highlight-yellow-text: #fef08a;
+      --closed-bg: #0b0a08;
+      --closed-text: #6b6558;
       --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
     }
   }
@@ -62,6 +78,14 @@
     --subheader-text: #cfe3f7;
     --status-live: #5cb896;
     --status-stale: #eab35c;
+    --highlight-red: #7f1d1d;
+    --highlight-red-text: #fecaca;
+    --highlight-orange: #7c2d12;
+    --highlight-orange-text: #fed7aa;
+    --highlight-yellow: #713f12;
+    --highlight-yellow-text: #fef08a;
+    --closed-bg: #0b0a08;
+    --closed-text: #6b6558;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
   }
 
@@ -189,6 +213,11 @@
     background: var(--accent-green);
   }
 
+  thead tr.dates th.closed {
+    background: var(--closed-bg);
+    color: var(--closed-text);
+  }
+
   thead tr.weekdays th {
     font-family: "Inter", sans-serif;
     font-weight: 600;
@@ -209,6 +238,11 @@
   thead tr.weekdays th.friday {
     background: var(--accent-green);
     color: #fff;
+  }
+
+  thead tr.weekdays th.closed {
+    background: var(--closed-bg);
+    color: var(--closed-text);
   }
 
   th.label-col, td.label-col {
@@ -243,8 +277,30 @@
     color: var(--text-muted);
   }
 
-  td.value.negative {
-    color: var(--status-stale);
+  td.value.hl-red {
+    background: var(--highlight-red) !important;
+    color: var(--highlight-red-text);
+    font-weight: 600;
+  }
+
+  td.value.hl-orange {
+    background: var(--highlight-orange) !important;
+    color: var(--highlight-orange-text);
+    font-weight: 600;
+  }
+
+  td.value.hl-yellow {
+    background: var(--highlight-yellow) !important;
+    color: var(--highlight-yellow-text);
+    font-weight: 600;
+  }
+
+  td.value.closed-cell {
+    background: var(--closed-bg) !important;
+    color: var(--closed-text);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   tbody tr:not(:last-child) td {
@@ -284,7 +340,7 @@
 <div class="page">
   <div class="topbar">
     <div class="titleblock">
-      <h1>Cutting Room Whiteboard</h1>
+      <h1>Inventory Remaining</h1>
       <p>Production board &middot; mirrored automatically from the source spreadsheet</p>
     </div>
     <div class="status">
@@ -310,7 +366,7 @@
   </div>
 
   <div class="footer">
-    <span>Updates automatically whenever the spreadsheet is saved &mdash; usually within a minute or two.</span>
+    <span>Updates automatically whenever the spreadsheet is saved &mdash; the time above is when it was last saved, not when this page last checked.</span>
     <span id="lastChecked"></span>
   </div>
 </div>
@@ -318,36 +374,74 @@
 <script>
   // --- Configuration -------------------------------------------------
   // Relative path: works because this page and board.json are served from the
-  // same GitHub Pages site, so no cross-origin request (and no separate raw.
-  // githubusercontent.com URL) is needed.
+  // same GitHub Pages site, so no cross-origin request is needed.
   const FEED_URL = "board.json";
   const POLL_INTERVAL_MS = 45000;
 
   // Last known snapshot, used only until the first real fetch succeeds.
   const FALLBACK_DATA = {
-    "generatedAt": "2026-08-28T20:18:12Z",
-    "days": ["Friday 28","Mon 31","Tue 1","Wed 2","Thur 3","Fri 4","Mon 7","Tue 8","Wed 9","Thur 10","Fri 11","Mon 14","Tue 15","Wed 16"],
+    "generatedAt": null,
+    "days": [
+      { "label": "Fri4", "weekday": "Fri", "num": "4", "closed": false },
+      { "label": "Mon7", "weekday": "Mon", "num": "7", "closed": true },
+      { "label": "Tue8", "weekday": "Tue", "num": "8", "closed": false }
+    ],
     "products": ["Loins","Hams","Picnics","Butts","Cap/NY","Bellies","Back ribs","Tenders","Buckeyes","Side ribs"],
     "board": {
-      "Loins": ["9bx","191 bx","-123 bx","179 bx","77 bx","362 bx","427 bx","238 bx","342 bx","288 bx","392 bx","211 bx",null,null],
-      "Hams": ["22 bx","6.0 CB","-3.5 CB","2.2 CB","5.7 CB","6.8 CB","16.8 CB","9.6 CB","8.2 CB","9.8 CB","10.4 CB","8.5 CB",null,null],
-      "Picnics": ["4.1 CB","3.2 CB","3.6 CB","4.7 CB","5.9 CB","6.0 CB","6.1 CB","6.0 CB","5.8 CB","5.9 CB","6.0 CB","5.8 CB",null,null],
-      "Butts": ["1.6 CB","4.5 CB","1.5 CB","1.6 CB","4.1 CB","5.9 CB","8.0 CB","5.1 CB","5.4 CB","6.1 CB","7.2 CB","7.0 CB",null,null],
-      "Cap/NY": ["3.3 CB","7.5 CB","3.3 CB","3.4 CB","8.5 CB","12.5 CB","16.8 CB","10.8 CB","11.5 CB","12.8 CB","15.1 CB","14.8 CB",null,null],
-      "Bellies": ["5 bx","1.3 CB","-0.2 CB","36 bx","17 bx","4.0 CB","6.7 CB","3.9 CB","2.9 CB","3.9 CB","4.5 CB","2.6 CB",null,null],
-      "Back ribs": ["3 bx","42 bx","23 bx","-2 bx","-12 bx","0 bx",null,"1 bx","2 bx","-7 bx","0 bx","39 bx",null,null],
-      "Tenders": ["-21 bx","25 bx","25 bx","0 bx","0 bx","0 bx",null,"1 bx","2 bx","4 bx","0 bx","25 bx",null,null],
-      "Buckeyes": ["-1 bx","10 bx","10 bx","4 bx","0 bx","0 bx",null,"1 bx","3 bx","4 bx","0 bx","27 bx",null,null],
-      "Side ribs": ["45 bx","61 bx","142 bx","52 bx","119 bx","74 bx",null,"60 bx","87 bx","41 bx","60 bx","90 bx",null,null]
+      "Loins": [
+        { "display": "288 bx", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "22 bx", "highlight": "yellow" }
+      ],
+      "Hams": [
+        { "display": "9.8 CB", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "0.4 CB", "highlight": "orange" }
+      ],
+      "Picnics": [
+        { "display": "5.9 CB", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "5.8 CB", "highlight": "none" }
+      ],
+      "Butts": [
+        { "display": "6.1 CB", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "-0.2 CB", "highlight": "red" }
+      ],
+      "Cap/NY": [
+        { "display": null, "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "5.8 CB", "highlight": "none" }
+      ],
+      "Bellies": [
+        { "display": "3.9 CB", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "2.9 CB", "highlight": "none" }
+      ],
+      "Back ribs": [
+        { "display": "-7 bx", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "2 bx", "highlight": "none" }
+      ],
+      "Tenders": [
+        { "display": "4 bx", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "2 bx", "highlight": "none" }
+      ],
+      "Buckeyes": [
+        { "display": "4 bx", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "3 bx", "highlight": "none" }
+      ],
+      "Side ribs": [
+        { "display": "41 bx", "highlight": "none" },
+        { "display": null, "highlight": "none" },
+        { "display": "87 bx", "highlight": "none" }
+      ]
     }
   };
 
   // --- Rendering -------------------------------------------------------
-  function splitDay(dayLabel) {
-    const parts = dayLabel.trim().split(/\s+/);
-    return { weekday: parts[0], num: parts.slice(1).join(" ") };
-  }
-
   function isFriday(weekday) {
     return /^Fri/i.test(weekday);
   }
@@ -371,18 +465,19 @@
     thLabel2.textContent = "";
     weekdayRow.appendChild(thLabel2);
 
-    data.days.forEach(dayLabel => {
-      const { weekday, num } = splitDay(dayLabel);
-      const friday = isFriday(weekday);
+    data.days.forEach(day => {
+      const friday = isFriday(day.weekday);
 
       const th1 = document.createElement("th");
-      th1.textContent = num;
-      if (friday) th1.className = "friday";
+      th1.textContent = day.num;
+      if (day.closed) th1.className = "closed";
+      else if (friday) th1.className = "friday";
       dateRow.appendChild(th1);
 
       const th2 = document.createElement("th");
-      th2.textContent = weekday;
-      if (friday) th2.className = "friday";
+      th2.textContent = day.closed ? "Closed" : day.weekday;
+      if (day.closed) th2.className = "closed";
+      else if (friday) th2.className = "friday";
       weekdayRow.appendChild(th2);
     });
 
@@ -394,15 +489,23 @@
       tr.appendChild(labelTd);
 
       const values = data.board[product] || [];
-      data.days.forEach((_, i) => {
+      data.days.forEach((day, i) => {
         const td = document.createElement("td");
-        const raw = values[i];
-        if (raw === null || raw === undefined || raw === "") {
+        const cell = values[i] || { display: null, highlight: "none" };
+
+        if (day.closed) {
+          td.className = "value closed-cell";
+          td.textContent = "Closed";
+        } else if (cell.display === null || cell.display === undefined || cell.display === "") {
           td.className = "value empty";
           td.textContent = "—";
         } else {
-          td.className = "value" + (String(raw).trim().startsWith("-") ? " negative" : "");
-          td.textContent = raw;
+          let cls = "value";
+          if (cell.highlight === "red") cls += " hl-red";
+          else if (cell.highlight === "orange") cls += " hl-orange";
+          else if (cell.highlight === "yellow") cls += " hl-yellow";
+          td.className = cls;
+          td.textContent = cell.display;
         }
         tr.appendChild(td);
       });
@@ -430,15 +533,15 @@
 
     if (state === "connected") {
       dot.className = "status-dot live";
-      text.textContent = "Updated " + formatWhen(generatedAt);
+      text.textContent = "Saved " + formatWhen(generatedAt);
       errorBanner.classList.remove("show");
     } else if (state === "fallback") {
       dot.className = "status-dot stale";
-      text.textContent = "Showing snapshot from " + formatWhen(generatedAt);
+      text.textContent = "Showing a sample layout — waiting for the first save";
       errorBanner.classList.remove("show");
     } else {
       dot.className = "status-dot stale";
-      text.textContent = "Last updated " + formatWhen(generatedAt);
+      text.textContent = "Last saved " + formatWhen(generatedAt);
       errorBanner.classList.add("show");
     }
   }
@@ -447,6 +550,8 @@
   let everConnected = false;
   const FETCH_TIMEOUT_MS = 8000;
 
+  // Render something immediately — never leave the page blank while the first
+  // fetch is still in flight.
   render(lastGoodData);
   setStatus("fallback", lastGoodData.generatedAt);
 
