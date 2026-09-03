@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cutting Room Whiteboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #faf7f2;
+    --surface: #ffffff;
+    --surface-alt: #f4f7fa;
+    --label-bg: #e8eef5;
+    --border: #e4e1da;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --accent-amber: #d97706;
+    --accent-green: #2f6b4f;
+    --accent-navy: #17365d;
+    --subheader-bg: #d9eaf7;
+    --subheader-text: #17365d;
+    --status-live: #2f6b4f;
+    --status-stale: #b45309;
+    --shadow: 0 1px 2px rgba(31, 41, 55, 0.04), 0 6px 16px rgba(31, 41, 55, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15130f;
+      --surface: #1d1a15;
+      --surface-alt: #231f18;
+      --label-bg: #2a2419;
+      --border: #3a3226;
+      --text: #f2ede3;
+      --text-muted: #a99d89;
+      --accent-amber: #f0980f;
+      --accent-green: #4c9174;
+      --accent-navy: #4a6f9c;
+      --subheader-bg: #24364a;
+      --subheader-text: #cfe3f7;
+      --status-live: #5cb896;
+      --status-stale: #eab35c;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #15130f;
+    --surface: #1d1a15;
+    --surface-alt: #231f18;
+    --label-bg: #2a2419;
+    --border: #3a3226;
+    --text: #f2ede3;
+    --text-muted: #a99d89;
+    --accent-amber: #f0980f;
+    --accent-green: #4c9174;
+    --accent-navy: #4a6f9c;
+    --subheader-bg: #24364a;
+    --subheader-text: #cfe3f7;
+    --status-live: #5cb896;
+    --status-stale: #eab35c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    padding: clamp(16px, 3vw, 40px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .titleblock h1 {
+    font-family: "Archivo", sans-serif;
+    font-weight: 800;
+    font-size: clamp(24px, 3vw, 32px);
+    letter-spacing: -0.01em;
+    margin: 0 0 4px 0;
+    text-wrap: balance;
+  }
+
+  .titleblock p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 14px 7px 10px;
+    box-shadow: var(--shadow);
+    white-space: nowrap;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-live);
+    flex-shrink: 0;
+  }
+
+  .status-dot.stale { background: var(--status-stale); }
+
+  .status-dot.live {
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--status-live) 45%, transparent); }
+    50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-live) 0%, transparent); }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .scroller {
+    overflow-x: auto;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 780px;
+  }
+
+  th, td {
+    padding: 10px 14px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  thead tr.dates th {
+    font-family: "Archivo", sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    background: var(--accent-navy);
+    padding-top: 12px;
+  }
+
+  thead tr.dates th.label-col {
+    background: var(--accent-amber);
+  }
+
+  thead tr.dates th.friday {
+    background: var(--accent-green);
+  }
+
+  thead tr.weekdays th {
+    font-family: "Inter", sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--subheader-text);
+    background: var(--subheader-bg);
+    padding-bottom: 10px;
+    padding-top: 6px;
+  }
+
+  thead tr.weekdays th.label-col {
+    background: var(--accent-amber);
+    color: #fff;
+  }
+
+  thead tr.weekdays th.friday {
+    background: var(--accent-green);
+    color: #fff;
+  }
+
+  th.label-col, td.label-col {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  td.label-col {
+    background: var(--label-bg);
+    color: var(--text);
+  }
+
+  tbody tr:nth-child(even) td:not(.label-col) {
+    background: var(--surface-alt);
+  }
+
+  tbody tr:nth-child(odd) td:not(.label-col) {
+    background: var(--surface);
+  }
+
+  td.value {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  td.value.empty {
+    color: var(--text-muted);
+  }
+
+  td.value.negative {
+    color: var(--status-stale);
+  }
+
+  tbody tr:not(:last-child) td {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding: 2px 4px;
+  }
+
+  .footer a { color: inherit; }
+
+  .error-banner {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--status-stale);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .error-banner.show { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="topbar">
+    <div class="titleblock">
+      <h1>Cutting Room Whiteboard</h1>
+      <p>Production board &middot; mirrored automatically from the source spreadsheet</p>
+    </div>
+    <div class="status">
+      <span class="status-dot live" id="statusDot"></span>
+      <span id="statusText">Checking for updates&hellip;</span>
+    </div>
+  </div>
+
+  <div class="error-banner" id="errorBanner">
+    Couldn't reach the latest data just now &mdash; showing the last known values.
+  </div>
+
+  <div class="card">
+    <div class="scroller">
+      <table id="board">
+        <thead>
+          <tr class="dates" id="dateRow"></tr>
+          <tr class="weekdays" id="weekdayRow"></tr>
+        </thead>
+        <tbody id="boardBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>Updates automatically whenever the spreadsheet is saved &mdash; usually within a minute or two.</span>
+    <span id="lastChecked"></span>
+  </div>
+</div>
+
+<script>
+  // --- Configuration -------------------------------------------------
+  // Relative path: works because this page and board.json are served from the
+  // same GitHub Pages site, so no cross-origin request (and no separate raw.
+  // githubusercontent.com URL) is needed.
+  const FEED_URL = "board.json";
+  const POLL_INTERVAL_MS = 45000;
+
+  // Last known snapshot, used only until the first real fetch succeeds.
+  const FALLBACK_DATA = {
+    "generatedAt": "2026-08-28T20:18:12Z",
+    "days": ["Friday 28","Mon 31","Tue 1","Wed 2","Thur 3","Fri 4","Mon 7","Tue 8","Wed 9","Thur 10","Fri 11","Mon 14","Tue 15","Wed 16"],
+    "products": ["Loins","Hams","Picnics","Butts","Cap/NY","Bellies","Back ribs","Tenders","Buckeyes","Side ribs"],
+    "board": {
+      "Loins": ["9bx","191 bx","-123 bx","179 bx","77 bx","362 bx","427 bx","238 bx","342 bx","288 bx","392 bx","211 bx",null,null],
+      "Hams": ["22 bx","6.0 CB","-3.5 CB","2.2 CB","5.7 CB","6.8 CB","16.8 CB","9.6 CB","8.2 CB","9.8 CB","10.4 CB","8.5 CB",null,null],
+      "Picnics": ["4.1 CB","3.2 CB","3.6 CB","4.7 CB","5.9 CB","6.0 CB","6.1 CB","6.0 CB","5.8 CB","5.9 CB","6.0 CB","5.8 CB",null,null],
+      "Butts": ["1.6 CB","4.5 CB","1.5 CB","1.6 CB","4.1 CB","5.9 CB","8.0 CB","5.1 CB","5.4 CB","6.1 CB","7.2 CB","7.0 CB",null,null],
+      "Cap/NY": ["3.3 CB","7.5 CB","3.3 CB","3.4 CB","8.5 CB","12.5 CB","16.8 CB","10.8 CB","11.5 CB","12.8 CB","15.1 CB","14.8 CB",null,null],
+      "Bellies": ["5 bx","1.3 CB","-0.2 CB","36 bx","17 bx","4.0 CB","6.7 CB","3.9 CB","2.9 CB","3.9 CB","4.5 CB","2.6 CB",null,null],
+      "Back ribs": ["3 bx","42 bx","23 bx","-2 bx","-12 bx","0 bx",null,"1 bx","2 bx","-7 bx","0 bx","39 bx",null,null],
+      "Tenders": ["-21 bx","25 bx","25 bx","0 bx","0 bx","0 bx",null,"1 bx","2 bx","4 bx","0 bx","25 bx",null,null],
+      "Buckeyes": ["-1 bx","10 bx","10 bx","4 bx","0 bx","0 bx",null,"1 bx","3 bx","4 bx","0 bx","27 bx",null,null],
+      "Side ribs": ["45 bx","61 bx","142 bx","52 bx","119 bx","74 bx",null,"60 bx","87 bx","41 bx","60 bx","90 bx",null,null]
+    }
+  };
+
+  // --- Rendering -------------------------------------------------------
+  function splitDay(dayLabel) {
+    const parts = dayLabel.trim().split(/\s+/);
+    return { weekday: parts[0], num: parts.slice(1).join(" ") };
+  }
+
+  function isFriday(weekday) {
+    return /^Fri/i.test(weekday);
+  }
+
+  function render(data) {
+    const dateRow = document.getElementById("dateRow");
+    const weekdayRow = document.getElementById("weekdayRow");
+    const body = document.getElementById("boardBody");
+
+    dateRow.innerHTML = "";
+    weekdayRow.innerHTML = "";
+    body.innerHTML = "";
+
+    const thLabel1 = document.createElement("th");
+    thLabel1.className = "label-col";
+    thLabel1.textContent = "Cut";
+    dateRow.appendChild(thLabel1);
+
+    const thLabel2 = document.createElement("th");
+    thLabel2.className = "label-col";
+    thLabel2.textContent = "";
+    weekdayRow.appendChild(thLabel2);
+
+    data.days.forEach(dayLabel => {
+      const { weekday, num } = splitDay(dayLabel);
+      const friday = isFriday(weekday);
+
+      const th1 = document.createElement("th");
+      th1.textContent = num;
+      if (friday) th1.className = "friday";
+      dateRow.appendChild(th1);
+
+      const th2 = document.createElement("th");
+      th2.textContent = weekday;
+      if (friday) th2.className = "friday";
+      weekdayRow.appendChild(th2);
+    });
+
+    data.products.forEach(product => {
+      const tr = document.createElement("tr");
+      const labelTd = document.createElement("td");
+      labelTd.className = "label-col";
+      labelTd.textContent = product;
+      tr.appendChild(labelTd);
+
+      const values = data.board[product] || [];
+      data.days.forEach((_, i) => {
+        const td = document.createElement("td");
+        const raw = values[i];
+        if (raw === null || raw === undefined || raw === "") {
+          td.className = "value empty";
+          td.textContent = "—";
+        } else {
+          td.className = "value" + (String(raw).trim().startsWith("-") ? " negative" : "");
+          td.textContent = raw;
+        }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+  }
+
+  function formatWhen(iso) {
+    if (!iso) return "unknown";
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    } catch (e) {
+      return iso;
+    }
+  }
+
+  function setStatus(state, generatedAt) {
+    const dot = document.getElementById("statusDot");
+    const text = document.getElementById("statusText");
+    const errorBanner = document.getElementById("errorBanner");
+    const lastChecked = document.getElementById("lastChecked");
+
+    lastChecked.textContent = "Checked " + new Date().toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+    if (state === "connected") {
+      dot.className = "status-dot live";
+      text.textContent = "Updated " + formatWhen(generatedAt);
+      errorBanner.classList.remove("show");
+    } else if (state === "fallback") {
+      dot.className = "status-dot stale";
+      text.textContent = "Showing snapshot from " + formatWhen(generatedAt);
+      errorBanner.classList.remove("show");
+    } else {
+      dot.className = "status-dot stale";
+      text.textContent = "Last updated " + formatWhen(generatedAt);
+      errorBanner.classList.add("show");
+    }
+  }
+
+  let lastGoodData = FALLBACK_DATA;
+  let everConnected = false;
+  const FETCH_TIMEOUT_MS = 8000;
+
+  render(lastGoodData);
+  setStatus("fallback", lastGoodData.generatedAt);
+
+  async function refresh() {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    try {
+      const res = await fetch(FEED_URL + (FEED_URL.includes("?") ? "&" : "?") + "t=" + Date.now(), {
+        cache: "no-store",
+        signal: controller.signal
+      });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (!data || !data.days || !data.days.length) throw new Error("empty feed");
+      lastGoodData = data;
+      everConnected = true;
+      render(data);
+      setStatus("connected", data.generatedAt);
+    } catch (err) {
+      render(lastGoodData);
+      setStatus(everConnected ? "error" : "fallback", lastGoodData.generatedAt);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  refresh();
+  setInterval(refresh, POLL_INTERVAL_MS);
+</script>
+
+</body>
+</html>
