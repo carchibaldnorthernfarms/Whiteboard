@@ -333,6 +333,19 @@
   }
 
   .error-banner.show { display: flex; }
+
+  .truck {
+    text-align: center;
+    padding: 4px;
+  }
+
+  .truck img {
+    max-width: 100%;
+    height: auto;
+    max-height: 140px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+  }
 </style>
 </head>
 <body>
@@ -368,6 +381,10 @@
   <div class="footer">
     <span>Updates automatically whenever the spreadsheet is saved &mdash; the time above is when it was last saved, not when this page last checked.</span>
     <span id="lastChecked"></span>
+  </div>
+
+  <div class="truck">
+    <img src="truck.png" alt="Northern Farms delivery truck">
   </div>
 </div>
 
