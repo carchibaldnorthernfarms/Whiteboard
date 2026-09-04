@@ -382,9 +382,9 @@
   const FALLBACK_DATA = {
     "generatedAt": null,
     "days": [
-      { "label": "Fri4", "weekday": "Fri", "num": "4", "closed": false },
-      { "label": "Mon7", "weekday": "Mon", "num": "7", "closed": true },
-      { "label": "Tue8", "weekday": "Tue", "num": "8", "closed": false }
+      { "label": "Fri4", "weekday": "Fri", "num": "4", "month": "Sep", "closed": false },
+      { "label": "Mon7", "weekday": "Mon", "num": "7", "month": "Sep", "closed": true },
+      { "label": "Tue8", "weekday": "Tue", "num": "8", "month": "Sep", "closed": false }
     ],
     "products": ["Loins","Hams","Picnics","Butts","Cap/NY","Bellies","Back ribs","Tenders","Buckeyes","Side ribs"],
     "board": {
@@ -469,7 +469,7 @@
       const friday = isFriday(day.weekday);
 
       const th1 = document.createElement("th");
-      th1.textContent = day.num;
+      th1.textContent = day.month ? (day.month + " " + day.num) : day.num;
       if (day.closed) th1.className = "closed";
       else if (friday) th1.className = "friday";
       dateRow.appendChild(th1);
