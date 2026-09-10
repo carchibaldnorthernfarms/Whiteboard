@@ -20,10 +20,23 @@ jobs:
             const fs = require('fs');
             const data = context.payload.client_payload.data;
             fs.writeFileSync('board.json', data);
+
       - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add board.json
           git diff --staged --quiet || git commit -m "update board data"
-          git push
+
+          n=0
+          until [ $n -ge 5 ]
+          do
+            if git push; then
+              break
+            fi
+            n=$((n+1))
+            echo "Push rejected (attempt $n) — fetching latest and retrying..."
+            git fetch origin main
+            git rebase origin/main -X theirs || { git rebase --abort; exit 1; }
+            sleep $((n * 2))
+          done
