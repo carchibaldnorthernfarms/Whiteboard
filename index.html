@@ -334,6 +334,37 @@
 
   .error-banner.show { display: flex; }
 
+  .notes-banner {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--accent-amber);
+    color: #fff;
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .notes-banner.show { display: flex; }
+
+  .notes-banner .notes-label {
+    flex-shrink: 0;
+    font-family: "Archivo", sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.25);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .notes-banner .notes-text {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
   .truck {
     text-align: center;
     padding: 4px;
@@ -353,6 +384,11 @@
 <body>
 
 <div class="page">
+  <div class="notes-banner" id="notesBanner">
+    <span class="notes-label">Note</span>
+    <span class="notes-text" id="notesText"></span>
+  </div>
+
   <div class="topbar">
     <div class="titleblock">
       <h1>Inventory Remaining</h1>
@@ -400,6 +436,7 @@
   // Last known snapshot, used only until the first real fetch succeeds.
   const FALLBACK_DATA = {
     "generatedAt": null,
+    "notes": null,
     "days": [
       { "label": "Fri4", "weekday": "Fri", "num": "4", "month": "Sep", "closed": false },
       { "label": "Mon7", "weekday": "Mon", "num": "7", "month": "Sep", "closed": true },
@@ -466,6 +503,15 @@
   }
 
   function render(data) {
+    const notesBanner = document.getElementById("notesBanner");
+    const notesText = document.getElementById("notesText");
+    if (data.notes && String(data.notes).trim()) {
+      notesText.textContent = data.notes;
+      notesBanner.classList.add("show");
+    } else {
+      notesBanner.classList.remove("show");
+    }
+
     const dateRow = document.getElementById("dateRow");
     const weekdayRow = document.getElementById("weekdayRow");
     const body = document.getElementById("boardBody");
