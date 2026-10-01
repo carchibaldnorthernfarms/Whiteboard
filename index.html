@@ -27,6 +27,7 @@
     --highlight-red: #fca5a5;
     --highlight-red-text: #7f1d1d;
     --highlight-lightred: #fee2e2;
+    --week-divider: #c9c3b6;
     --highlight-lightred-text: #b91c1c;
     --highlight-orange: #fed7aa;
     --highlight-orange-text: #7c2d12;
@@ -56,6 +57,7 @@
       --highlight-red: #7f1d1d;
       --highlight-red-text: #fecaca;
       --highlight-lightred: #3d1a1a;
+      --week-divider: #4f4637;
       --highlight-lightred-text: #f5a3a3;
       --highlight-orange: #7c2d12;
       --highlight-orange-text: #fed7aa;
@@ -85,6 +87,7 @@
     --highlight-red: #7f1d1d;
     --highlight-red-text: #fecaca;
     --highlight-lightred: #3d1a1a;
+    --week-divider: #4f4637;
     --highlight-lightred-text: #f5a3a3;
     --highlight-orange: #7c2d12;
     --highlight-orange-text: #fed7aa;
@@ -334,6 +337,15 @@
     min-width: 0;
   }
 
+  /* Divider lines between week columns (not next to the Cut column) */
+  table.weekly-table th:not(.label-col) + th {
+    border-left: 2px solid rgba(255, 255, 255, 0.35);
+  }
+
+  table.weekly-table td:not(.label-col) + td {
+    border-left: 2px solid var(--week-divider);
+  }
+
   table.weekly-table th:not(.label-col),
   table.weekly-table td.value {
     padding-left: 22px;
@@ -476,7 +488,7 @@
   <div class="weekly" id="weekly">
     <div class="weekly-head">
       <h2>Weekly totals</h2>
-      <span>Each week&rsquo;s days added up &middot; negative days not counted</span>
+      <span>Each week&rsquo;s days added up &middot; negative days not counted as they are taking from the next day</span>
     </div>
     <div class="card">
       <div class="scroller">
