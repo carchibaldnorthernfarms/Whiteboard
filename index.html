@@ -133,6 +133,14 @@
     flex-wrap: wrap;
   }
 
+  /* Let the subtitle wrap so the update-time pill stays at the top right */
+  .titleblock {
+    flex: 1 1 420px;
+    min-width: 0;
+  }
+
+  .status { flex-shrink: 0; }
+
   .titleblock h1 {
     font-family: "Archivo", sans-serif;
     font-weight: 800;
@@ -475,9 +483,9 @@
   <div class="topbar">
     <div class="titleblock">
       <h1>Inventory Remaining</h1>
-      <p>Production board &middot; mirrored automatically from the source spreadsheet</p>
+      <p>Day 1: Numbers will be adjusted for inventory/WIP and finalized shortly after the morning meeting. This will be known when update time changed to AM.</p>
     </div>
-<div class="status" style="display:none">
+<div class="status" id="statusPill" style="display:none">
   <span class="status-dot live" id="statusDot"></span>
       <span id="statusText">Checking for updates&hellip;</span>
     </div>
@@ -502,7 +510,7 @@
   <div class="weekly" id="weekly">
     <div class="weekly-head">
       <h2>Weekly totals</h2>
-      <span>Each week&rsquo;s days are totaled. Negative days are carried over to the following day, unless there aren&rsquo;t enough days available to offset them.</span>
+      <span>Each week&rsquo;s days are totaled. Negative days are taken from previous days supply, unless there aren&rsquo;t enough days available to offset them.</span>
     </div>
     <div class="card">
       <div class="scroller">
@@ -518,7 +526,7 @@
   </div>
 
   <div class="footer">
-    <span>Updates automatically whenever the spreadsheet is saved &mdash; the time above is when it was last saved, not when this page last checked.</span>
+    <span>Updates automatically whenever the spreadsheet is saved.</span>
     <span id="lastChecked"></span>
   </div>
 
@@ -756,9 +764,15 @@
     }
   }
 
+  // The pill at the top right shows the update time typed into cell W1 of the spreadsheet.
+  // Hidden whenever W1 is blank (or before the first real data has loaded).
   function setStatus(state, generatedAt) {
+    const pill = document.getElementById("statusPill");
     const dot = document.getElementById("statusDot");
     const text = document.getElementById("statusText");
+    const posted = (state !== "fallback" && lastGoodData && lastGoodData.updateTime)
+      ? String(lastGoodData.updateTime).trim() : "";
+    pill.style.display = posted ? "" : "none";
     const errorBanner = document.getElementById("errorBanner");
     const lastChecked = document.getElementById("lastChecked");
 
@@ -766,7 +780,7 @@
 
     if (state === "connected") {
       dot.className = "status-dot live";
-      text.textContent = "Saved " + formatWhen(generatedAt);
+      text.textContent = /^updated/i.test(posted) ? posted : "Updated " + posted;
       errorBanner.classList.remove("show");
     } else if (state === "fallback") {
       dot.className = "status-dot stale";
@@ -774,7 +788,7 @@
       errorBanner.classList.remove("show");
     } else {
       dot.className = "status-dot stale";
-      text.textContent = "Last saved " + formatWhen(generatedAt);
+      text.textContent = /^updated/i.test(posted) ? posted : "Updated " + posted;
       errorBanner.classList.add("show");
     }
   }
