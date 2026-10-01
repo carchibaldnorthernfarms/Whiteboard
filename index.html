@@ -26,6 +26,8 @@
     --status-stale: #b45309;
     --highlight-red: #fca5a5;
     --highlight-red-text: #7f1d1d;
+    --highlight-lightred: #fee2e2;
+    --highlight-lightred-text: #b91c1c;
     --highlight-orange: #fed7aa;
     --highlight-orange-text: #7c2d12;
     --highlight-yellow: #fef08a;
@@ -53,6 +55,8 @@
       --status-stale: #eab35c;
       --highlight-red: #7f1d1d;
       --highlight-red-text: #fecaca;
+      --highlight-lightred: #3d1a1a;
+      --highlight-lightred-text: #f5a3a3;
       --highlight-orange: #7c2d12;
       --highlight-orange-text: #fed7aa;
       --highlight-yellow: #713f12;
@@ -80,6 +84,8 @@
     --status-stale: #eab35c;
     --highlight-red: #7f1d1d;
     --highlight-red-text: #fecaca;
+    --highlight-lightred: #3d1a1a;
+    --highlight-lightred-text: #f5a3a3;
     --highlight-orange: #7c2d12;
     --highlight-orange-text: #fed7aa;
     --highlight-yellow: #713f12;
@@ -283,6 +289,57 @@
     font-weight: 600;
   }
 
+  td.value.hl-lightred {
+    background: var(--highlight-lightred) !important;
+    color: var(--highlight-lightred-text);
+    font-weight: 600;
+  }
+
+  /* Weekly totals table (under the board) */
+  .weekly {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .weekly.show { display: flex; }
+
+  .weekly-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 0 4px;
+  }
+
+  .weekly-head h2 {
+    font-family: "Archivo", sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    margin: 0;
+  }
+
+  .weekly-head span {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+
+  .weekly .card {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+
+  table.weekly-table {
+    width: auto;
+    min-width: 0;
+  }
+
+  table.weekly-table th:not(.label-col),
+  table.weekly-table td.value {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+
   td.value.hl-orange {
     background: var(--highlight-orange) !important;
     color: var(--highlight-orange-text);
@@ -394,8 +451,8 @@
       <h1>Inventory Remaining</h1>
       <p>Production board &middot; mirrored automatically from the source spreadsheet</p>
     </div>
-    <div class="status" style="display:none">
-      <span class="status-dot live" id="statusDot"></span>
+<div class="status" style="display:none">
+  <span class="status-dot live" id="statusDot"></span>
       <span id="statusText">Checking for updates&hellip;</span>
     </div>
   </div>
@@ -413,6 +470,24 @@
         </thead>
         <tbody id="boardBody"></tbody>
       </table>
+    </div>
+  </div>
+
+  <div class="weekly" id="weekly">
+    <div class="weekly-head">
+      <h2>Weekly totals</h2>
+      <span>Each week&rsquo;s days added up &middot; negative days not counted</span>
+    </div>
+    <div class="card">
+      <div class="scroller">
+        <table class="weekly-table">
+          <thead>
+            <tr class="dates" id="weekDateRow"></tr>
+            <tr class="weekdays" id="weekDaysRow"></tr>
+          </thead>
+          <tbody id="weekBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -567,6 +642,70 @@
         } else {
           let cls = "value";
           if (cell.highlight === "red") cls += " hl-red";
+          else if (cell.highlight === "lightred") cls += " hl-lightred";
+          else if (cell.highlight === "orange") cls += " hl-orange";
+          else if (cell.highlight === "yellow") cls += " hl-yellow";
+          td.className = cls;
+          td.textContent = cell.display;
+        }
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+
+    renderWeeks(data);
+  }
+
+  // Weekly totals table — only shown once the spreadsheet script sends `weeks`.
+  function renderWeeks(data) {
+    const wrap = document.getElementById("weekly");
+    const dateRow = document.getElementById("weekDateRow");
+    const daysRow = document.getElementById("weekDaysRow");
+    const body = document.getElementById("weekBody");
+    dateRow.innerHTML = "";
+    daysRow.innerHTML = "";
+    body.innerHTML = "";
+
+    const weeks = Array.isArray(data.weeks) ? data.weeks : [];
+    if (!weeks.length) {
+      wrap.classList.remove("show");
+      return;
+    }
+    wrap.classList.add("show");
+
+    const h1 = document.createElement("th");
+    h1.className = "label-col";
+    h1.textContent = "Cut";
+    dateRow.appendChild(h1);
+    const h2 = document.createElement("th");
+    h2.className = "label-col";
+    daysRow.appendChild(h2);
+
+    weeks.forEach(w => {
+      const th1 = document.createElement("th");
+      th1.textContent = w.label;
+      dateRow.appendChild(th1);
+      const th2 = document.createElement("th");
+      th2.textContent = w.days === 1 ? "1 day" : (w.days + " days");
+      daysRow.appendChild(th2);
+    });
+
+    data.products.forEach(product => {
+      const tr = document.createElement("tr");
+      const labelTd = document.createElement("td");
+      labelTd.className = "label-col";
+      labelTd.textContent = product;
+      tr.appendChild(labelTd);
+      weeks.forEach(w => {
+        const cell = (w.board && w.board[product]) || { display: null, highlight: "none" };
+        const td = document.createElement("td");
+        if (cell.display === null || cell.display === undefined || cell.display === "") {
+          td.className = "value empty";
+          td.textContent = "—";
+        } else {
+          let cls = "value";
+          if (cell.highlight === "red") cls += " hl-red";
+          else if (cell.highlight === "lightred") cls += " hl-lightred";
           else if (cell.highlight === "orange") cls += " hl-orange";
           else if (cell.highlight === "yellow") cls += " hl-yellow";
           td.className = cls;
